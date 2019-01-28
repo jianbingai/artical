@@ -1,0 +1,26 @@
+centos7使用yum安装mariaDB（开源MySQL）无法启动的解决办法
+
+centos7内置的MySQL镜像已经放弃Oracle公司的MySQL，改用MySQL的分支数据库mariaDB，使用以下安装mariadb：
+
+yum install mariadb
+然后使用命令systemctl start mariadb，提示如下：
+
+Failed to start mariadb.service: Unit mariadb.service failed to load: No such file or directory
+意思找不到mariadb这个服务。之所以找不到，是因为mariadb的安装本身就没有完成，执行以下命令，查看mariadb的依赖情况：
+$ sudo yum search mariadb
+看到以下结果：
+
+
+执行以下，安装缺少的依赖包：
+
+$ yum install mariadb-embedded mariadb-libs mariadb-bench mariadb mariadb-sever
+然后再启动mariadb，正常，如果要设置开机自启动mariadb，使用以下命令：
+$ systemctl enable mariadb
+一定要记得，使用yum install命令安装mysql时，需要多加一个通配符"*"，使用如下命令：
+
+yum install mariadb*
+--------------------- 
+作者：eclothy 
+来源：CSDN 
+原文：https://blog.csdn.net/eclothy/article/details/52733891 
+版权声明：本文为博主原创文章，转载请附上博文链接！
