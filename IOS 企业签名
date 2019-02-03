@@ -1,0 +1,122 @@
+https://blog.csdn.net/xzben/article/details/84855871
+企业签名步骤：
+
+1、首先得有一个企业级的账号，然后 生成证书，注册App ID，然后生产描述文件 
+
+2、生成一个 entitlements.plist 内容如下：
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>TeamID.*</string>
+	</array>
+	<key>get-task-allow</key>
+	<false/>
+	<key>application-identifier</key>
+	<string> TeamID.企业账号上生成的描述文件对应的APPID</string>
+	<key>com.apple.developer.team-identifier</key>
+	<string> TeamID </string>
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>
+注意上面的TeamID 要根据你企业账号填对应的值， 还有描述文件生成对应选择的AppId 要按照你的实际情况写
+
+3、下载 生成的证书，描述文件下载安装。然后将上面生成的 entitlements.plist 和 下载描述文件（ xxx.mobileprovision ）放到一个目录下 
+
+4、将要签名的ipa 也放入上面的目录下 然后。 unzip  xxxx.ipa
+
+5、进入解压ipa生成的目录。 Payload/xxx.app  删除 embedded.mobileprovision 然后将你自己企业账号生成的描述文件 xxx.mobileprovision 放入 替换原先的 embedded.mobileprovision
+
+rm Payload/xxx.app/embedded.mobileprovision
+cp xxx.mobileprovision Payload/xxx.app/embedded.mobileprovision
+6、重新签名
+
+codesign -f -s '你企业证书对应的签名名字 如 iPhone Distribution: Hunan Qi Neng Science and Technology Co.,Ltd'  --entitlements entitlements.plist Payload/xxx.app
+7、将签名后的 Payload 目录压缩成 ipa
+
+zip -r out_signed.ipa Payload
+完成。
+
+本人为了精简打包过程特地写了个快捷打包的脚本，代码如下：
+
+#!/bin/sh
+outfilename="signed.ipa"
+ 
+clearoldinfo()
+{
+	rm $outfilename
+	echo "rm $outfilename"
+	rm -rf Payload
+	echo "rm -rf Payload"
+	
+}
+ 
+getvalueRet=""
+getvalue()
+{
+	defaultvalue=$(ls $2)
+	echo $1 "default value=$defaultvalue enter use defaultvalue"
+	read value
+	
+	if [ $value=="" ]
+	then
+		value=$defaultvalue	
+	fi
+	
+	getvalueRet=$value	
+}
+ 
+dopackage()
+{
+	clearoldinfo
+ 
+	getvalue "请输入签名原包路径（xxx.ipa）" *.ipa
+	originPackagePath=$getvalueRet
+	unzip $originPackagePath > /dev/null
+ 
+	getvalue "请输入签名的签名描述文件路径(xxx.mobileprovision) " *.mobileprovision
+	mobileProvisionPath=$getvalueRet
+ 
+	appName=$(ls Payload | grep .app)
+	echo "the package appname is: $appName"
+	rm Payload/$appName/embedded.mobileprovision
+	cp $mobileProvisionPath Payload/$appName/embedded.mobileprovision
+	
+	getvalue "请输入签名使用的 entitlements.plist 文件路径" *.plist
+	entitlementpath=$getvalueRet
+ 
+	echo "请从下面可用的选择可用的企业名称输入"
+	security find-identity -v -p codesigning
+	read name
+ 
+	echo "read $name"
+	echo "codesign -f -s $name --entitlements $entitlementpath Payload/$appName"
+	codesign -f -s "$name" --entitlements $entitlementpath Payload/$appName
+	# codesign -f -s "iPhone Distribution: Z MANTIS KAI SIA E.E."  --entitlements entitlements.plist Payload/luaxymj-mobile.app
+	# echo "codesign -f -s $name --entitlements $entitlementpath Payload/$appName"
+	echo "zip -r $outfilename Payload"
+	zip -r $outfilename Payload > /dev/null
+	echo "resigned success outfileis: $(pwd)/$outfilename"
+}
+ 
+if [ $# -ne 0 ]
+then
+	if [ $1=="clean" ]
+	then
+		clearoldinfo	
+	fi
+else
+	dopackage
+fi
+使用方法为，将  描述文件 xxx.mobileprovision  entitlements.plist xxx.ipa 放到一个目录，然后执行脚本，然后一路回车，中途按照提示选择copy输入下签名需要选择的签名名称就行了。
+
+
+--------------------- 
+作者：xzben 
+来源：CSDN 
+原文：https://blog.csdn.net/xzben/article/details/84855871 
+版权声明：本文为博主原创文章，转载请附上博文链接！
