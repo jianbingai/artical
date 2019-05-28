@@ -1,0 +1,36 @@
+yum install redis
+下载安装php-redis扩展： 地址：https://github.com/phpredis/phpredis/
+
+$ wget http://pecl.php.net/get/redis-3.1.2.tgz
+$ tar xzf redis-3.1.2.tgz 
+$ cd redis-3.1.2/
+$ phpize
+$ ./configure --with-php-config=/usr/local/php/bin/php-config
+#这里的php-config路径 根据自己实际情况而定
+$  make && make install
+
+#出现
+#Installing shared extensions:/usr/local/php/lib/php/extensions/no-debug-non-zts-20131226/
+#即为安装成功。
+#打开php.in文件，并添加 extension=redis.so,保存退出即可
+$ vim /usr/local/php/etc/php.ini
+  #文件末尾添加 extension=redis.so
+  #保存退出，
+重启php+nginx服务，phpinfo中将会出现redis扩展信息
+
+测试：
+
+启动redis服务，
+
+$ cd redis-3.1.2
+$ src/redis-server
+编辑test.php测试文件
+
+<?php
+$redis = new Redis();
+
+$redis->connect('127.0.0.1', 6379);
+
+$redis->set("name", "nango");
+echo $redis->get('name');
+?>
