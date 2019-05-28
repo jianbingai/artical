@@ -1,0 +1,40 @@
+1.安装rabbitmq-c库和codegen配件
+
+wget https://github.com/alanxz/rabbitmq-c/tarball/0.2
+tar zxf 0.2
+
+wget https://github.com/rabbitmq/rabbitmq-codegen/tarball/master
+tar zxf master
+
+mv rabbitmq-rabbitmq-codegen-4e97f73/ alanxz-rabbitmq-c-f8f4fc7/codegen（文件夹名不一定，用ls查看）
+cd alanxz-rabbitmq-c-f8f4fc7
+
+autoreconf -i
+如果没有报错,则继续执行
+./configure
+make && make install
+
+ 
+
+2.安装php RabbitMQ扩展
+
+wget http://pecl.php.net/get/amqp-1.0.4.tgz
+tar zxf amqp-1.0.4.tgz && cd amqp-1.0.4
+
+/usr/local/php/bin/phpize
+./configure –with-php-config=/usr/local/php/bin/php-config –with-amqp（php-config文件所在目录不一定，我的为/usr/bin/php-config）
+make && make install
+
+记录好make install下的提示信息,我这里是:
+Installing shared extensions:     /usr/local/php/lib/php/extensions/no-debug-non-zts-20090626/
+
+然后去php.ini配置文件里添加amqp.so
+
+3.支持php RabbitMQ扩展
+
+vi /etc/php.ini
+在最下面添加
+extension=amqp.so （我的配置文件为/etc/php.d/amqp.ini）
+extension_dir = “/usr/local/php/lib/php/extensions/no-debug-non-zts-20090626/”（不一定，我的为/usr/lib64/php/modules/）
+
+重启php-fpm即可
