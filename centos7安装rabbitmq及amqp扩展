@@ -6,6 +6,7 @@ rpm -ivh rabbitmq-server-3.6.10-1.el7.noarch.rpm
 
 rabbitmq启动与停止
 systemctl start rabbitmq-server
+systemctl enable rabbitmq-server
 systemctl status rabbitmq-server
 systemctl restart rabbitmq-server
 #设置为开机启动
