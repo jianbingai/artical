@@ -1,0 +1,176 @@
+安装rabbitmq
+安装需要安装erlang 21
+vim /etc/yum.repos.d/rabbitmq-erlang.repo
+写入以下内容
+[rabbitmq-erlang]
+name=rabbitmq-erlang
+baseurl=https://dl.bintray.com/rabbitmq/rpm/erlang/21/el/7
+gpgcheck=1
+gpgkey=https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
+repo_gpgcheck=0
+enabled=1
+
+然后通过yum安装
+yum install erlang
+
+安装
+ cd /usr/local/src/
+wget https://dl.bintray.com/rabbitmq/all/rabbitmq-server/3.7.7/rabbitmq-server-3.7.7-1.el7.noarch.rpm
+rpm --import https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc#
+yum install rabbitmq-server-3.7.7-1.el7.noarch.rpm
+
+rabbitmq启动与停止
+systemctl start rabbitmq-server
+systemctl status rabbitmq-server
+systemctl restart rabbitmq-server
+#设置为开机启动
+systemctl enable rabbitmq-server
+
+配置网页插件
+rabbitmq-plugins enable rabbitmq_management
+
+允许远程登陆访问
+vim /etc/rabbitmq/rabbitmq.config
+写入以下内容
+[{rabbit, [{loopback_users, []}]}].
+
+打开http://192.168.1.196:15672
+
+
+
+
+
+
+image.png
+
+默认账号密码都是：guest
+
+安装amqp扩展
+安装amqp扩展前需要安装rabbitmq-c
+下载地址：https://github.com/alanxz/rabbitmq-c
+wget https://github.com/alanxz/rabbitmq-c/releases/download/v0.8.0/rabbitmq-c-0.8.0.tar.gz
+tar -zxvf rabbitmq-c-0.8.0.tar.gz
+cd rabbitmq-c-0.8.0
+./configure --prefix=/usr/local/rabbitmq-c
+make && make install
+
+php安装amqp扩展
+下载地址https://pecl.php.net/package/amqp
+wget https://pecl.php.net/get/amqp-1.9.3.tgz
+tar -zxf amqp-1.9.3.tgz
+cd amqp-1.9.3
+phpize
+./configure --with-php-config=/usr/local/php/bin/php-config --with-amqp --with-librabbitmq-dir=/usr/local/rabbitmq-c
+make && make install
+
+然后在php.ini加上
+extension = amqp.so
+
+重启php打印phpinfo();可以看到amqp安装成功
+
+
+
+
+
+
+image.png
+
+简单php发布-订阅消息代码
+发布消息
+
+<?php
+
+/*
+ * 发布
+ * create by superrd
+ */
+
+$queueName = 'superrd';
+$exchangeName = 'superrd';
+$routeKey = 'superrd';
+$message = 'Hello World!';
+$connection = new AMQPConnection(array('host' => '192.168.1.196', 'port' => '5672', 'vhost' => '/', 'login' => 'guest', 'password' => 'guest'));
+$connection->connect() or die("Cannot connect to the broker!\n");
+try {
+    //实例化通道
+    $channel = new AMQPChannel($connection);
+    //实例化交换机
+    $exchange = new AMQPExchange($channel);
+    //设置交换机名称
+    $exchange->setName($exchangeName);
+    //设置交换机类型
+    $exchange->setType(AMQP_EX_TYPE_DIRECT);
+    //交换机持久化
+    $exchange->setFlags(AMQP_DURABLE);
+    $exchange->declareExchange();
+
+    $queue = new AMQPQueue($channel);
+    $queue->setName($queueName);
+    //队列持久化
+    $queue->setFlags(AMQP_DURABLE);
+    $queue->declareQueue();
+    //绑定交换机
+    $queue->bind($exchangeName, $routeKey);
+    //发送消息
+    $exchange->publish($message,$routeKey);
+
+    var_dump("[x] Sent 'Hello World!'");
+
+} catch (AMQPConnectionException $e) {
+    var_dump($e);
+    exit();
+}
+ $connection->disconnect();
+
+订阅消息
+
+<?php
+/*
+ * 订阅
+ * create by superrd
+ */
+$queueName = 'superrd';
+$exchangeName = 'superrd';
+$routeKey = 'superrd';
+$connection = new AMQPConnection(array('host' => '192.168.1.196', 'port' => '5672', 'vhost' => '/', 'login' => 'guest', 'password' => 'guest'));
+$connection->connect() or die("Cannot connect to the broker!\n");
+
+$channel = new AMQPChannel($connection);
+$exchange = new AMQPExchange($channel);
+$exchange->setName($exchangeName);
+$exchange->setType(AMQP_EX_TYPE_DIRECT);
+$exchange->setFlags(AMQP_DURABLE);
+$exchange->declareExchange();
+
+$queue = new AMQPQueue($channel);
+$queue->setName($queueName);
+$queue->setFlags(AMQP_DURABLE);
+$queue->declareQueue();
+
+$queue->bind($exchangeName, $routeKey);
+
+//阻塞模式接收消息
+
+echo "Message:\n";
+while(True){
+        $queue->consume('processMessage');
+//自动ACK应答
+        //$queue->consume('processMessage', AMQP_AUTOACK);
+}
+
+$conn->disconnect();
+
+/*
+* 消费回调函数
+* 处理消息
+*/
+function processMessage($envelope, $q) {
+    $msg = $envelope->getBody();
+    echo $msg."\n"; //处理消息
+    $q->ack($envelope->getDeliveryTag()); //手动发送ACK应答
+}
+
+作者：骑着大象去上班
+链接：https://www.jianshu.com/p/c37ad8d460ac
+来源：简书
+简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
