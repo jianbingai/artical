@@ -1,0 +1,4 @@
+下载composer.phar 
+curl -sS https://getcomposer.org/installer | php
+把composer.phar移动到环境下让其变成可执行 
+mv composer.phar /usr/local/bin/composer
