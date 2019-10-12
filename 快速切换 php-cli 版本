@@ -1,0 +1,19 @@
+使用 update-alternatives 快速切换 php-cli 版本
+
+1. 已知宝塔的PHP库安置在 /www/server/php/
+
+
+
+2. 使用 update-alternatives 安装 php 配置
+sudo update-alternatives --install /etc/alternatives/php php /www/server/php/54/bin/php 54
+sudo update-alternatives --install /etc/alternatives/php php /www/server/php/56/bin/php 56
+sudo update-alternatives --install /etc/alternatives/php php /www/server/php/71/bin/php 71
+
+3. 删除自带的软链接
+sudo rm -rf /usr/bin/php
+
+4. 创建新的软连接
+ln -s /etc/alternatives/php /usr/bin
+
+5. 现在可以随意切换了
+sudo update-alternatives --config php
