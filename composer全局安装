@@ -1,0 +1,4 @@
+$ curl -sS https://getcomposer.org/installer | php
+//上面的命令会下载 composer.phar 到当前目录
+$ mv composer.phar /usr/local/bin/composer
+//重命名移动到 bin目录下
