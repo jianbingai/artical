@@ -1,0 +1,18 @@
+yum -y install wget
+wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubi/doubi/master/ssr.sh && chmod +x ssr.sh && bash ssr.sh
+
+安装选，1
+
+端口自己定，回车
+
+密码设置，xxxx
+
+加密方式,回车
+
+兼容原版，y
+
+混淆，回车
+
+回车，回车，回车
+
+出来连接信息
